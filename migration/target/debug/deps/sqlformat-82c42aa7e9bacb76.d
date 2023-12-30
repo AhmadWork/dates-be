@@ -1,0 +1,10 @@
+/Users/ahmadalsehaim/Desktop/random-projects/dates_backend/migration/target/debug/deps/sqlformat-82c42aa7e9bacb76.rmeta: /Users/ahmadalsehaim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sqlformat-0.2.1/src/lib.rs /Users/ahmadalsehaim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sqlformat-0.2.1/src/formatter.rs /Users/ahmadalsehaim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sqlformat-0.2.1/src/indentation.rs /Users/ahmadalsehaim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sqlformat-0.2.1/src/inline_block.rs /Users/ahmadalsehaim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sqlformat-0.2.1/src/params.rs /Users/ahmadalsehaim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sqlformat-0.2.1/src/tokenizer.rs
+
+/Users/ahmadalsehaim/Desktop/random-projects/dates_backend/migration/target/debug/deps/sqlformat-82c42aa7e9bacb76.d: /Users/ahmadalsehaim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sqlformat-0.2.1/src/lib.rs /Users/ahmadalsehaim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sqlformat-0.2.1/src/formatter.rs /Users/ahmadalsehaim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sqlformat-0.2.1/src/indentation.rs /Users/ahmadalsehaim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sqlformat-0.2.1/src/inline_block.rs /Users/ahmadalsehaim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sqlformat-0.2.1/src/params.rs /Users/ahmadalsehaim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sqlformat-0.2.1/src/tokenizer.rs
+
+/Users/ahmadalsehaim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sqlformat-0.2.1/src/lib.rs:
+/Users/ahmadalsehaim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sqlformat-0.2.1/src/formatter.rs:
+/Users/ahmadalsehaim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sqlformat-0.2.1/src/indentation.rs:
+/Users/ahmadalsehaim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sqlformat-0.2.1/src/inline_block.rs:
+/Users/ahmadalsehaim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sqlformat-0.2.1/src/params.rs:
+/Users/ahmadalsehaim/.cargo/registry/src/index.crates.io-6f17d22bba15001f/sqlformat-0.2.1/src/tokenizer.rs:
