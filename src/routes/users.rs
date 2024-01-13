@@ -1,4 +1,4 @@
-use crate::models::palms::{self, Entity as Palms};
+use crate::models::palms::{self};
 use crate::models::users::{self, Entity as Users, Model};
 use crate::models::sea_orm_active_enums::Growth;
 use crate::utilities::errors::AppError;
@@ -11,6 +11,9 @@ use sea_orm::{
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use chrono::{Utc, NaiveDateTime};
+
+
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserResponse {
@@ -33,6 +36,14 @@ impl Default for Growth {
 }
 
 
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct UpdateOverTimeResponse {
+    user_id: i32,
+    worker_percentage: i32,
+    dates_before: i32,
+    dates_after: i32,
+}
 #[derive(Serialize, Deserialize)]
 pub struct UserProfileResponseWithTree {
     id: i32,
@@ -55,7 +66,7 @@ pub struct User {
     token: String,
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default,Debug)]
 pub struct Palm {
     id: i32,
     dpm: i32,
@@ -80,13 +91,13 @@ pub struct RequestRegisterUser {
 #[derive(Serialize, Deserialize)]
 pub struct Coins {
     number: i32,
-    
+
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Dates {
     number: i32,
-    
+
 }
 
 
@@ -100,7 +111,7 @@ pub struct RequestUpdate {
 pub struct RequestTree {
     dpm: i32,
     growth: Growth,
-    
+
 }
 
 pub async fn create_user(
@@ -142,7 +153,7 @@ pub async fn create_user(
                 return Err(translate_error(error));
             }
         };
-        
+
         let palms_json: Vec<Palm> = palm_trees.into_iter().map(|p| {
             Palm {
                 id: p.id,
@@ -206,7 +217,7 @@ pub async fn sign_in(
                 return Err(translate_error(error));
             }
         };
-        
+
         let palms_json: Vec<Palm> = palm_trees.into_iter().map(|p| {
             Palm {
                 id: p.id,
@@ -236,15 +247,97 @@ pub async fn sign_in(
 pub async fn user_detalis(
     Extension(db): Extension<DatabaseConnection>,
     Extension(user): Extension<Model>,
-) -> Json<UserProfileResponse> {
-            Json(UserProfileResponse {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                dates: user.dates,
-                coins: user.coins,
-        })
+) -> Result<Json<UserProfileResponseWithTree>, AppError> {
+        let palm_trees = match find_palms_by_user(user.id, &db).await{
+            Ok(palm_trees) => palm_trees,
+            Err(error) => {
+                return Err(translate_error(error));
+            }
+        };
+
+        let palms_json: Vec<Palm> = palm_trees.into_iter().map(|p| {
+            Palm {
+                id: p.id,
+                dpm: p.dpm,
+                growth: p.growth.unwrap(),
+                user_id: p.user_id,
+            }
+        }).collect();
+
+
+        Ok(Json(UserProfileResponseWithTree {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            dates: user.dates,
+            coins: user.coins,
+            token: user.token,
+            palms: palms_json,
+        }))
 }
+pub async fn update_user_overtime(
+    Extension(db): Extension<DatabaseConnection>,
+    Extension(user): Extension<Model>,
+    ) -> Result<Json<UpdateOverTimeResponse>, AppError> {
+         let mut user_active: users::ActiveModel = user.clone().into();
+        let palm_trees = match find_palms_by_user(user.id, &db).await{
+            Ok(palm_trees) => palm_trees,
+            Err(error) => {
+                return Err(translate_error(error));
+            }
+        };
+
+        let palms_json: Vec<Palm> = palm_trees.into_iter().map(|p| {
+            Palm {
+                id: p.id,
+                dpm: p.dpm,
+                growth: p.growth.unwrap(),
+                user_id: p.user_id,
+            }
+        }).collect();
+
+        let current_time: NaiveDateTime = Utc::now().naive_utc();
+        let duration = current_time - user.updated_at;
+
+        let minutes = duration.num_minutes();
+
+        println!("{:?}", &palms_json);
+        let mut dates:i64 = 0;
+
+        for palm in &palms_json {
+            dates += minutes * palm.dpm as i64;
+        }
+
+        let twenty_percent = dates.clone() as f64 * 0.20;
+
+        // Round up and convert back to i64
+        let worker_percentage = twenty_percent.ceil() as i32;
+
+        dates -= worker_percentage as i64;
+        let dates_before = user.dates;
+
+
+        user_active.dates = Set(user.dates + dates as i32);
+
+        match user_active.save(&db).await {
+            Err(error) => Err(AppError::new(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                eyre::eyre!(error),
+            )),
+            Ok(saved_user) => {
+                 Ok(Json(UpdateOverTimeResponse {
+                    user_id: saved_user.id.unwrap(),
+                    worker_percentage,
+                    dates_before,
+                    dates_after: saved_user.dates.unwrap(),
+        }))
+
+        },
+    }
+    }
+
+
+
 pub async fn logout(
     Extension(db): Extension<DatabaseConnection>,
     Extension(user): Extension<Model>,
@@ -266,16 +359,22 @@ pub async fn update_user(
     Json(request_update): Json<RequestUpdate>,
 ) -> Result<Json<UserProfileResponse>, AppError> {
     let mut user: users::ActiveModel = user.into();
+    // get current time
+    let current_time: NaiveDateTime = Utc::now().naive_utc();
+
+
     // Handle Coins if it's provided
     if let Some(coins) = &request_update.coins {
         // Assuming Coins has a field `number`
         user.coins = Set(coins.number);
+        user.updated_at = Set(current_time.clone());
     }
 
     // Handle Dates if it's provided
     if let Some(dates) = &request_update.dates {
         // Assuming Dates has a field `number`
         user.dates = Set(dates.number);
+        user.updated_at = Set(current_time.clone());
     }
     match user.save(&db).await {
         Err(error) => Err(AppError::new(
@@ -297,9 +396,8 @@ pub async fn update_user(
 pub async fn add_tree(
     Extension(db): Extension<DatabaseConnection>,
     Extension(user): Extension<Model>,
-    Json(request_update): Json<RequestTree>,
 ) -> Result<Json<UserProfileResponseWithTree>, AppError> {
-    let mut user: users::ActiveModel = user.into();
+    let user: users::ActiveModel = user.into();
     let user_id = user.id.clone().unwrap();
 
     let new_palm = palms::ActiveModel {
@@ -321,7 +419,7 @@ pub async fn add_tree(
                     return Err(translate_error(error));
                 }
             };
-            
+
             let palms_json: Vec<Palm> = palm_trees.into_iter().map(|p| {
                 Palm {
                     id: p.id,
